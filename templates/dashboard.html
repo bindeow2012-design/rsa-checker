@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ข้อมูลการทดลอง</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Sarabun', sans-serif;
+            max-width: 1100px; margin: 30px auto; padding: 20px;
+            background: #f5f7fa;
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        .stats-cards {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px; margin-bottom: 25px;
+        }
+        .card {
+            background: white; padding: 20px; border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .card-label { color: #888; font-size: 13px; }
+        .card-value { font-size: 28px; font-weight: bold; color: #667eea; margin-top: 5px; }
+        .controls { margin-bottom: 20px; display: flex; gap: 10px; }
+        button {
+            padding: 10px 20px; background: #667eea; color: white;
+            border: none; border-radius: 8px; cursor: pointer;
+            font-weight: 600;
+        }
+        button:hover { opacity: 0.9; }
+        table {
+            width: 100%; border-collapse: collapse;
+            background: white; border-radius: 12px;
+            overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        th, td { padding: 14px; text-align: left; }
+        th { background: #667eea; color: white; font-weight: 600; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        tr:hover { background: #eef2ff; }
+        .k-value { font-family: monospace; text-align: right; }
+        .back { color: #667eea; text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <a href="/" class="back">← กลับหน้าแรก</a>
+    <h1 style="margin-top: 15px;">📊 Dashboard: ข้อมูลจากการทดลอง</h1>
+    
+    <div class="stats-cards">
+        <div class="card">
+            <div class="card-label">ข้อมูลทั้งหมด</div>
+            <div class="card-value" id="total">-</div>
+        </div>
+        <div class="card">
+            <div class="card-label">จำนวนเครื่องที่ส่ง</div>
+            <div class="card-value" id="sources">-</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Combo ที่เก็บได้</div>
+            <div class="card-value" id="combos">-</div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button onclick="loadData()">🔄 Refresh</button>
+    </div>
+    
+    <table id="table">
+        <thead>
+            <tr>
+                <th>digits</th>
+                <th>D %</th>
+                <th>จำนวนตัวอย่าง</th>
+                <th>avg k</th>
+                <th>min k</th>
+                <th>max k</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        async function loadData() {
+            const [sumRes, statsRes] = await Promise.all([
+                fetch('/api/summary'),
+                fetch('/api/stats')
+            ]);
+            const summary = await sumRes.json();
+            const stats = await statsRes.json();
+            
+            document.getElementById('total').textContent = stats.total_rows.toLocaleString();
+            document.getElementById('sources').textContent = stats.sources;
+            document.getElementById('combos').textContent = summary.length;
+            
+            const tbody = document.querySelector('#table tbody');
+            tbody.innerHTML = '';
+            summary.forEach(row => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${row.digits}</td>
+                        <td>${row.D_target}</td>
+                        <td>${row.count}</td>
+                        <td class="k-value">${Math.round(row.avg_k).toLocaleString()}</td>
+                        <td class="k-value">${row.min_k?.toLocaleString() ?? '-'}</td>
+                        <td class="k-value">${row.max_k?.toLocaleString() ?? '-'}</td>
+                    </tr>
+                `;
+            });
+        }
+        loadData();
+        setInterval(loadData, 10000);
+    </script>
+</body>
+</html>
