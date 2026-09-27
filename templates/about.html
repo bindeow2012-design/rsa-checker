@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกี่ยวกับ - RSA Security Checker</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', 'Sarabun', sans-serif;
+            max-width: 800px; margin: 30px auto; padding: 20px;
+            background: #f5f7fa; line-height: 1.7; color: #333;
+        }
+        .card {
+            background: white; padding: 40px; border-radius: 15px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+        }
+        h1 { margin-bottom: 15px; color: #333; }
+        h2 { margin: 25px 0 10px; color: #667eea; font-size: 20px; }
+        .back { color: #667eea; text-decoration: none; font-weight: 600; display: inline-block; margin-bottom: 15px; }
+        .formula {
+            background: #f0f4ff; padding: 15px 20px;
+            border-left: 4px solid #667eea; border-radius: 8px;
+            font-family: monospace; font-size: 15px; margin: 10px 0;
+        }
+        ul { margin-left: 25px; }
+        li { margin-bottom: 8px; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #888; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <a href="/" class="back">← กลับหน้าแรก</a>
+    <div class="card">
+        <h1>ℹ️ เกี่ยวกับโปรเจกต์นี้</h1>
+        
+        <p>เว็บนี้เป็นส่วนหนึ่งของโครงงานคณิตศาสตร์ เรื่อง 
+        <strong>"การวิเคราะห์ประสิทธิภาพของทฤษฎีการแยกตัวประกอบของแฟร์มาต์
+        ต่อความปลอดภัยของระบบรหัสลับ RSA"</strong></p>
+        
+        <h2>🎯 หลักการทำงาน</h2>
+        <p>เว็บใช้ <strong>2 แหล่งข้อมูล</strong> ในการประเมิน:</p>
+        <ul>
+            <li><strong>สูตรทฤษฎี</strong> — คำนวณได้ทุก n</li>
+            <li><strong>ข้อมูลการทดลอง</strong> — เก็บจากมือถือที่รันจริง</li>
+        </ul>
+        
+        <h2>📐 สูตรที่ใช้</h2>
+        <div class="formula">
+            k ≈ (D² × √N) / 8
+        </div>
+        <p>โดยที่:</p>
+        <ul>
+            <li><strong>k</strong> = จำนวนรอบที่อัลกอริทึมแฟร์มาต์ใช้</li>
+            <li><strong>D</strong> = ระยะห่างสัมพัทธ์ระหว่าง p และ q</li>
+            <li><strong>N</strong> = มอดุลัส RSA (n = p × q)</li>
+        </ul>
+        
+        <h2>🔍 การประเมินความปลอดภัย</h2>
+        <ul>
+            <li>❌ <strong>อันตราย</strong>: k &lt; 10³ รอบ</li>
+            <li>⚠️ <strong>ต่ำ</strong>: k &lt; 10⁶ รอบ</li>
+            <li>🟡 <strong>พอใช้</strong>: k &lt; 2⁴⁰ รอบ</li>
+            <li>✅ <strong>ปลอดภัย</strong>: k &lt; 2⁶⁴ รอบ</li>
+            <li>🟢 <strong>ปลอดภัยสูง</strong>: k ≥ 2⁶⁴ รอบ</li>
+        </ul>
+        
+        <h2>👥 ผู้จัดทำ</h2>
+        <p>เด็กชายกฤติพงศ์ คำภาพันธ์<br>
+        เด็กชายพัชรพล ไข่คำ<br>
+        เด็กชายพิทักษ์พงศ์ โคตรสีเมือง</p>
+        
+        <p><strong>ครูที่ปรึกษา:</strong> นางสาวสุพิชชานันท์ ทองอินทร์</p>
+        <p><strong>โรงเรียน:</strong> โรงเรียนวิทยาศาสตร์จุฬาภรณราชวิทยาลัย ชลบุรี</p>
+        
+        <div class="footer">
+            โครงงานคณิตศาสตร์ ระดับชั้นมัธยมศึกษาตอนต้น ปีการศึกษา 2569
+        </div>
+    </div>
+</body>
+</html>
