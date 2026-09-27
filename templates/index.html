@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSA Security Checker</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', 'Sarabun', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 750px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { color: #888; margin-bottom: 30px; font-size: 14px; line-height: 1.5; }
+        label { display: block; margin-top: 20px; font-weight: 600; color: #444; }
+        .hint { font-size: 12px; color: #999; font-weight: normal; margin-left: 5px; }
+        input {
+            width: 100%; padding: 15px; margin-top: 8px;
+            border: 2px solid #e0e0e0; border-radius: 10px;
+            font-size: 16px; transition: border 0.3s;
+            font-family: monospace;
+        }
+        input:focus { outline: none; border-color: #667eea; }
+        button {
+            width: 100%; padding: 15px; margin-top: 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; border-radius: 10px;
+            font-size: 18px; font-weight: 600; cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: translateY(-2px); }
+        button:disabled { opacity: 0.6; cursor: wait; }
+        .result {
+            margin-top: 30px; padding: 25px;
+            border-radius: 15px; animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .danger { background: #ffebee; border-left: 5px solid #f44336; }
+        .warning { background: #fff3e0; border-left: 5px solid #ff9800; }
+        .moderate { background: #fff9c4; border-left: 5px solid #fbc02d; }
+        .safe { background: #e8f5e9; border-left: 5px solid #4caf50; }
+        .very_safe { background: #e0f2f1; border-left: 5px solid #009688; }
+        .result h3 { margin-bottom: 15px; color: #333; font-size: 20px; }
+        .exp-list { margin-top: 15px; }
+        .exp-item {
+            padding: 10px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            color: #555;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .exp-item:last-child { border-bottom: none; }
+        .exp-icon { font-size: 18px; flex-shrink: 0; }
+        .footer-info {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #888;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-high { background: #4caf50; color: white; }
+        .badge-medium { background: #ff9800; color: white; }
+        .badge-theory { background: #2196f3; color: white; }
+        .nav-links {
+            text-align: center; margin-top: 25px;
+            padding-top: 20px; border-top: 1px solid #eee;
+        }
+        .nav-links a {
+            color: #667eea; text-decoration: none;
+            font-weight: 600; margin: 0 10px;
+        }
+        .nav-links a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 RSA Security Checker</h1>
+        <p class="subtitle">
+            ตรวจสอบความปลอดภัยของกุญแจ RSA<br>
+            ด้วยการผสมผสานสูตรคณิตศาสตร์และข้อมูลการทดลอง Fermat Factorization
+        </p>
+        
+        <form id="checkForm">
+            <label>
+                ค่า n (กุญแจสาธารณะ):
+                <span class="hint">ใส่ได้ทุกขนาด ตั้งแต่ 3 หลักขึ้นไป</span>
+            </label>
+            <input type="text" id="n" required 
+                   placeholder="เช่น 12345678901234567">
+            
+            <label>
+                ระยะห่าง p, q โดยประมาณ (D%):
+                <span class="hint">0 = ใกล้กัน, 100 = ห่างกันมาก</span>
+            </label>
+            <input type="number" id="D" value="50" min="0" max="100">
+            
+            <button type="submit" id="submitBtn">ตรวจสอบความปลอดภัย</button>
+        </form>
+        
+        <div id="result"></div>
+        
+        <div class="nav-links">
+            <a href="/dashboard">📊 Dashboard</a>
+            <a href="/about">ℹ️ เกี่ยวกับ</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('checkForm');
+        const btn = document.getElementById('submitBtn');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const n = document.getElementById('n').value.trim();
+            const D = document.getElementById('D').value;
+            
+            // validate
+            if (!/^\d+$/.test(n)) {
+                alert('ค่า n ต้องเป็นตัวเลขเท่านั้น');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = 'กำลังตรวจสอบ...';
+            
+            try {
+                const res = await fetch('/api/check', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({n: n, D: parseInt(D)})
+                });
+                const data = await res.json();
+                
+                const el = document.getElementById('result');
+                
+                if (data.status === 'error') {
+                    el.className = 'result danger';
+                    el.innerHTML = `<h3>❌ ${data.msg}</h3>`;
+                    return;
+                }
+                
+                // badge
+                const badgeClass = data.confidence === 'สูง' ? 'badge-high' 
+                                 : data.confidence === 'ปานกลาง' ? 'badge-medium' 
+                                 : 'badge-theory';
+                
+                // explanations
+                let expHTML = '<div class="exp-list">';
+                data.explanations.forEach(exp => {
+                    expHTML += `
+                        <div class="exp-item">
+                            <span class="exp-icon">${exp.icon}</span>
+                            <span>${exp.text}</span>
+                        </div>
+                    `;
+                });
+                expHTML += '</div>';
+                
+                el.className = 'result ' + data.status;
+                el.innerHTML = `
+                    <h3>${data.msg}</h3>
+                    ${expHTML}
+                    <div class="footer-info">
+                        <span>n มี ${data.digits} หลัก</span>
+                        <span class="badge ${badgeClass}">
+                            ความเชื่อมั่น: ${data.confidence}
+                        </span>
+                    </div>
+                `;
+                
+            } catch (err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'ตรวจสอบความปลอดภัย';
+            }
+        });
+    </script>
+</body>
+</html>
