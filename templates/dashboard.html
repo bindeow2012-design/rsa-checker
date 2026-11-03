@@ -2,69 +2,112 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard - ข้อมูลการทดลอง</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | RSA Checker Data</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; max-width: 1000px; margin: 30px auto; padding: 20px; background: #f5f7fa; }
-        h1 { color: #333; margin-bottom: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; }
-        .btn-reset { padding: 10px 15px; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .btn-refresh { padding: 10px 15px; background: #2196f3; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-top: 20px; }
-        th, td { padding: 14px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #667eea; color: white; }
-        tr:hover { background: #f9f9f9; }
-        .k-value { font-family: monospace; text-align: right; }
+        body { font-family: 'Prompt', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .font-mono { font-family: 'Fira Code', monospace; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        table th { background: rgba(15, 23, 42, 0.8); }
+        table tr:hover { background: rgba(30, 41, 59, 0.5); }
     </style>
 </head>
-<body>
-    <div class="header">
-        <h1>📊 ข้อมูลจากการทดลอง</h1>
-        <div>
-            <button class="btn-refresh" onclick="loadData()">🔄 Refresh</button>
-            <button class="btn-reset" onclick="resetDB()">🗑️ ล้างฐานข้อมูล</button>
+<body class="min-h-screen p-6 md:p-10">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">📊 Data Dashboard</h1>
+                <p class="text-slate-400 mt-1">ข้อมูลผลการทดลอง Fermat Factorization</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="loadData()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Refresh
+                </button>
+                <button onclick="resetDB()" class="px-5 py-2.5 bg-red-900/50 hover:bg-red-800 border border-red-700/50 rounded-lg text-sm font-semibold text-red-200 transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    ล้างฐานข้อมูล
+                </button>
+                <a href="/" class="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    กลับหน้าแรก
+                </a>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="glass-panel rounded-xl overflow-hidden shadow-2xl">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-700 text-sm text-cyan-300">
+                            <th class="p-4 font-semibold">ขนาด p,q (หลัก)</th>
+                            <th class="p-4 font-semibold">ระยะห่าง D %</th>
+                            <th class="p-4 font-semibold text-center">จำนวนตัวอย่าง</th>
+                            <th class="p-4 font-semibold text-right">avg k (รอบ)</th>
+                            <th class="p-4 font-semibold text-right text-slate-500">min k</th>
+                            <th class="p-4 font-semibold text-right text-slate-500">max k</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="text-sm divide-y divide-slate-800/50">
+                        <tr><td colspan="6" class="p-8 text-center text-slate-500">กำลังโหลดข้อมูล...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-    
-    <table id="table">
-        <thead>
-            <tr>
-                <th>digits (p,q)</th><th>D %</th><th>จำนวนตัวอย่าง</th><th>avg k</th><th>min k</th><th>max k</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
 
+    <!-- JavaScript -->
     <script>
         async function loadData() {
-            const res = await fetch('/api/summary');
-            const data = await res.json();
-            const tbody = document.querySelector('#table tbody');
-            
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">ยังไม่มีข้อมูล</td></tr>';
-                return;
+            try {
+                const res = await fetch('/api/summary');
+                const data = await res.json();
+                const tbody = document.getElementById('tableBody');
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-500">ยังไม่มีข้อมูลในฐานข้อมูล</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = data.map(row => `
+                    <tr class="transition-colors">
+                        <td class="p-4 font-mono text-slate-300">${row.digits}</td>
+                        <td class="p-4">
+                            <span class="inline-block px-2 py-1 rounded bg-slate-800 text-cyan-300 font-mono text-xs border border-slate-700">${row.D_target}%</span>
+                        </td>
+                        <td class="p-4 text-center text-slate-400 font-mono">${row.count}</td>
+                        <td class="p-4 text-right font-mono font-bold text-amber-300">${Math.round(row.avg_k).toLocaleString()}</td>
+                        <td class="p-4 text-right font-mono text-slate-500">${row.min_k.toLocaleString()}</td>
+                        <td class="p-4 text-right font-mono text-slate-500">${row.max_k.toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error(err);
             }
-            
-            tbody.innerHTML = data.map(row => `
-                <tr>
-                    <td>${row.digits} หลัก</td>
-                    <td>${row.D_target}%</td>
-                    <td>${row.count}</td>
-                    <td class="k-value">${Math.round(row.avg_k).toLocaleString()}</td>
-                    <td class="k-value" style="color:#888;">${row.min_k.toLocaleString()}</td>
-                    <td class="k-value" style="color:#888;">${row.max_k.toLocaleString()}</td>
-                </tr>
-            `).join('');
         }
 
         async function resetDB() {
-            if (!confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลทั้งหมด? (ควรทำเมื่อข้อมูลขยะเยอะ)')) return;
-            await fetch('/api/reset_db', { method: 'POST' });
-            alert('ล้างข้อมูลสำเร็จ!');
-            loadData();
+            if (!confirm('⚠️ คำเตือน: คุณต้องการลบข้อมูลการทดลองทั้งหมดออกจากฐานข้อมูลใช่หรือไม่?\n\nข้อมูลที่ลบจะไม่สามารถกู้คืนได้')) return;
+            
+            try {
+                const res = await fetch('/api/reset_db', { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    alert('✅ ล้างฐานข้อมูลเรียบร้อยแล้ว');
+                    loadData();
+                }
+            } catch (err) {
+                alert('❌ เกิดข้อผิดพลาดในการล้างข้อมูล');
+            }
         }
 
+        // โหลดข้อมูลทันทีที่เปิดหน้า
         loadData();
+        // อัปเดตอัตโนมัติทุก 10 วินาที
         setInterval(loadData, 10000);
     </script>
 </body>
