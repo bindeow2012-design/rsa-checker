@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Dashboard | RSA Checker Data</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- เพิ่ม Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&family=Fira+Code&display=swap" rel="stylesheet">
     <style>
@@ -16,17 +15,20 @@
 <body class="min-h-screen p-6 md:p-10">
     <div class="max-w-6xl mx-auto">
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-cyan-400">📊 Dashboard & Data Visualization</h1>
+            <div>
+                <h1 class="text-3xl font-bold text-cyan-400">📊 Dashboard & Data Visualization</h1>
+                <p class="text-slate-400 text-sm mt-1">กราฟแสดงความสัมพันธ์ระหว่าง D% กับจำนวนรอบ k</p>
+            </div>
             <div class="flex gap-3">
-                <button onclick="resetDB()" class="px-4 py-2 bg-red-900/50 text-red-200 border border-red-700 rounded-lg hover:bg-red-800">ล้างข้อมูล</button>
-                <a href="/" class="px-4 py-2 bg-cyan-600 rounded-lg hover:bg-cyan-500">กลับหน้าแรก</a>
+                <button onclick="resetDB()" class="px-4 py-2 bg-red-900/50 text-red-200 border border-red-700 rounded-lg hover:bg-red-800 transition">ล้างข้อมูล</button>
+                <a href="/" class="px-4 py-2 bg-cyan-600 rounded-lg hover:bg-cyan-500 transition">กลับหน้าแรก</a>
             </div>
         </div>
 
         <!-- กราฟแสดงความสัมพันธ์ -->
         <div class="glass-panel p-6 rounded-xl mb-8">
-            <h2 class="text-lg font-bold mb-4 text-slate-300">กราฟความสัมพันธ์: ระยะห่าง (D%) vs จำนวนรอบ (k)</h2>
-            <div class="h-80 w-full relative">
+            <h2 class="text-lg font-bold mb-4 text-slate-300">กราฟเปรียบเทียบ (เฉพาะหลักที่มากที่สุดในฐานข้อมูล)</h2>
+            <div class="h-96 w-full relative">
                 <canvas id="myChart"></canvas>
             </div>
         </div>
@@ -35,9 +37,16 @@
         <div class="glass-panel rounded-xl overflow-hidden">
             <table class="w-full text-left">
                 <thead class="bg-slate-800 text-cyan-300 text-sm">
-                    <tr><th class="p-4">ขนาด p,q</th><th class="p-4">D %</th><th class="p-4 text-center">จำนวนตัวอย่าง</th><th class="p-4 text-right">avg k</th></tr>
+                    <tr>
+                        <th class="p-4">ขนาด p,q</th>
+                        <th class="p-4">D %</th>
+                        <th class="p-4 text-center">จำนวนตัวอย่าง</th>
+                        <th class="p-4 text-right">avg k (รอบ)</th>
+                    </tr>
                 </thead>
-                <tbody id="tableBody" class="text-sm divide-y divide-slate-800/50"></tbody>
+                <tbody id="tableBody" class="text-sm divide-y divide-slate-800/50">
+                    <tr><td colspan="4" class="p-8 text-center text-slate-500">กำลังโหลด...</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -46,26 +55,31 @@
         let chartInstance = null;
 
         async function loadData() {
-            const res = await fetch('/api/summary');
-            const data = await res.json();
-            
-            // 1. อัปเดตตาราง
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = data.map(row => `
-                <tr>
-                    <td class="p-4 font-mono">${row.digits} หลัก</td>
-                    <td class="p-4 font-mono text-cyan-400">${row.D_target}%</td>
-                    <td class="p-4 text-center font-mono text-slate-400">${row.count}</td>
-                    <td class="p-4 text-right font-mono font-bold text-amber-300">${Math.round(row.avg_k).toLocaleString()}</td>
-                </tr>
-            `).join('');
+            try {
+                const res = await fetch('/api/summary');
+                const data = await res.json();
+                
+                // 1. อัปเดตตาราง
+                const tbody = document.getElementById('tableBody');
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-500">ยังไม่มีข้อมูล</td></tr>';
+                    return;
+                }
 
-            // 2. อัปเดตกราฟ (เลือกแสดงเฉพาะข้อมูลที่ digits มากที่สุดเพื่อไม่ให้กราฟรก)
-            if (data.length > 0) {
+                tbody.innerHTML = data.map(row => `
+                    <tr class="hover:bg-slate-800/50 transition">
+                        <td class="p-4 font-mono">${row.digits} หลัก</td>
+                        <td class="p-4 font-mono text-cyan-400">${row.D_target}%</td>
+                        <td class="p-4 text-center font-mono text-slate-400">${row.count}</td>
+                        <td class="p-4 text-right font-mono font-bold text-amber-300">${Math.round(row.avg_k).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+
+                // 2. วาดกราฟ (เลือกเฉพาะ digits ที่มากที่สุด)
                 const maxDigit = Math.max(...data.map(d => d.digits));
                 const chartData = data.filter(d => d.digits === maxDigit).sort((a,b) => a.D_target - b.D_target);
                 
-                const labels = chartData.map(d => `${d.D_target}%`);
+                const labels = chartData.map(d => `D = ${d.D_target}%`);
                 const kValues = chartData.map(d => d.avg_k);
 
                 if (chartInstance) chartInstance.destroy();
@@ -85,34 +99,50 @@
                             fill: true,
                             pointBackgroundColor: '#fff',
                             pointBorderColor: '#38bdf8',
-                            pointRadius: 5
+                            pointRadius: 6
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { labels: { color: '#cbd5e1', font: { family: 'Prompt' } } }
+                            legend: { labels: { color: '#cbd5e1', font: { family: 'Prompt' } } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ' k ≈ ' + Math.round(context.parsed.y).toLocaleString() + ' รอบ';
+                                    }
+                                }
+                            }
                         },
                         scales: {
                             x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
                             y: { 
-                                type: 'logarithmic', // ใช้ Log scale เพราะ k เพิ่มขึ้นเร็วมาก
-                                ticks: { color: '#94a3b8' }, 
+                                type: 'logarithmic', 
+                                ticks: { 
+                                    color: '#94a3b8',
+                                    callback: function(value) {
+                                        return value.toLocaleString(); // จัดรูปแบบตัวเลขให้อ่านง่าย
+                                    }
+                                }, 
                                 grid: { color: '#334155' } 
                             }
                         }
                     }
                 });
+            } catch (err) {
+                console.error("Error loading data:", err);
             }
         }
 
         async function resetDB() {
-            if (!confirm('⚠️ ต้องการลบข้อมูลทั้งหมดใช่หรือไม่?')) return;
+            if (!confirm('⚠️ ต้องการลบข้อมูลทั้งหมดใช่หรือไม่? (แนะนำให้ลบเพื่อเริ่มรัน Colab ใหม่ให้ข้อมูลเป๊ะๆ)')) return;
             await fetch('/api/reset_db', { method: 'POST' });
+            alert('ล้างข้อมูลสำเร็จ!');
             loadData();
         }
 
+        // โหลดข้อมูลครั้งแรก
         loadData();
     </script>
 </body>
