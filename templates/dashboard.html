@@ -10,139 +10,204 @@
         body { font-family: 'Prompt', sans-serif; background-color: #0f172a; color: #f8fafc; }
         .font-mono { font-family: 'Fira Code', monospace; }
         .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        select { appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2338bdf8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 1rem top 50%; background-size: 0.65rem auto; }
     </style>
 </head>
 <body class="min-h-screen p-6 md:p-10">
     <div class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-cyan-400">📊 Dashboard & Data Visualization</h1>
+                <h1 class="text-3xl font-bold text-cyan-400">📊 Dashboard & Data</h1>
                 <p class="text-slate-400 text-sm mt-1">กราฟแสดงความสัมพันธ์ระหว่าง D% กับจำนวนรอบ k</p>
             </div>
-            <div class="flex gap-3">
+            <div class="flex flex-wrap gap-3">
+                <button onclick="openRawModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-500 rounded-lg transition flex items-center gap-2">
+                    🔍 ดูข้อมูลดิบ (n, e, p, q)
+                </button>
                 <button onclick="resetDB()" class="px-4 py-2 bg-red-900/50 text-red-200 border border-red-700 rounded-lg hover:bg-red-800 transition">ล้างข้อมูล</button>
                 <a href="/" class="px-4 py-2 bg-cyan-600 rounded-lg hover:bg-cyan-500 transition">กลับหน้าแรก</a>
             </div>
         </div>
 
-        <!-- กราฟแสดงความสัมพันธ์ -->
         <div class="glass-panel p-6 rounded-xl mb-8">
-            <h2 class="text-lg font-bold mb-4 text-slate-300">กราฟเปรียบเทียบ (เฉพาะหลักที่มากที่สุดในฐานข้อมูล)</h2>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                <h2 class="text-lg font-bold text-slate-300">กราฟเปรียบเทียบจำนวนรอบ (k)</h2>
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-slate-400">เลือกขนาด p,q:</label>
+                    <select id="digitSelect" onchange="updateChart()" class="bg-slate-800 text-cyan-300 border border-slate-600 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-32 p-2.5 outline-none font-mono cursor-pointer">
+                        <option value="">กำลังโหลด...</option>
+                    </select>
+                </div>
+            </div>
             <div class="h-96 w-full relative">
                 <canvas id="myChart"></canvas>
             </div>
         </div>
 
-        <!-- ตารางข้อมูล -->
         <div class="glass-panel rounded-xl overflow-hidden">
             <table class="w-full text-left">
                 <thead class="bg-slate-800 text-cyan-300 text-sm">
                     <tr>
-                        <th class="p-4">ขนาด p,q</th>
-                        <th class="p-4">D %</th>
-                        <th class="p-4 text-center">จำนวนตัวอย่าง</th>
-                        <th class="p-4 text-right">avg k (รอบ)</th>
+                        <th class="p-4">ขนาด p,q</th><th class="p-4">D %</th><th class="p-4 text-center">จำนวนตัวอย่าง</th><th class="p-4 text-right">avg k (รอบ)</th>
                     </tr>
                 </thead>
-                <tbody id="tableBody" class="text-sm divide-y divide-slate-800/50">
-                    <tr><td colspan="4" class="p-8 text-center text-slate-500">กำลังโหลด...</td></tr>
-                </tbody>
+                <tbody id="tableBody" class="text-sm divide-y divide-slate-800/50"></tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Modal สำหรับแสดงข้อมูลดิบ -->
+    <div id="rawModal" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-600 rounded-xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl animate-[fadeIn_0.2s_ease-out]">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/80 rounded-t-xl">
+                <h3 class="text-lg font-bold text-cyan-400">🗄️ ข้อมูลดิบในฐานข้อมูล (ล่าสุด 200 รายการ)</h3>
+                <button onclick="closeRawModal()" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+            </div>
+            
+            <div class="p-4 border-b border-slate-700 bg-slate-900/50">
+                <input type="text" id="rawSearch" onkeyup="filterRawData()" placeholder="🔍 ค้นหาเลข n, p, หรือ q..." class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-slate-200 focus:border-cyan-500 outline-none font-mono text-sm">
+            </div>
+
+            <div class="p-0 overflow-auto flex-1 rounded-b-xl">
+                <table class="w-full text-left text-sm whitespace-nowrap">
+                    <thead class="bg-slate-900 sticky top-0 text-slate-300 border-b border-slate-700 z-10">
+                        <tr>
+                            <th class="p-3">ID</th>
+                            <th class="p-3 text-cyan-300">n (Modulus)</th>
+                            <th class="p-3 text-amber-300">e (Exponent)</th>
+                            <th class="p-3">p</th>
+                            <th class="p-3">q</th>
+                            <th class="p-3 text-right">k (รอบ)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rawTableBody" class="divide-y divide-slate-800 font-mono text-slate-400">
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
         let chartInstance = null;
+        let allData = [];
+        let allRawData = [];
 
         async function loadData() {
             try {
                 const res = await fetch('/api/summary');
-                const data = await res.json();
-                
-                // 1. อัปเดตตาราง
-                const tbody = document.getElementById('tableBody');
-                if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-500">ยังไม่มีข้อมูล</td></tr>';
-                    return;
-                }
+                allData = await res.json();
+                renderTable(allData);
+                updateDropdown(allData);
+            } catch (err) { console.error(err); }
+        }
 
-                tbody.innerHTML = data.map(row => `
-                    <tr class="hover:bg-slate-800/50 transition">
-                        <td class="p-4 font-mono">${row.digits} หลัก</td>
-                        <td class="p-4 font-mono text-cyan-400">${row.D_target}%</td>
-                        <td class="p-4 text-center font-mono text-slate-400">${row.count}</td>
-                        <td class="p-4 text-right font-mono font-bold text-amber-300">${Math.round(row.avg_k).toLocaleString()}</td>
-                    </tr>
-                `).join('');
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-500">ยังไม่มีข้อมูล</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.map(row => `
+                <tr class="hover:bg-slate-800/50 transition">
+                    <td class="p-4 font-mono">${row.digits} หลัก</td>
+                    <td class="p-4 font-mono text-cyan-400">${row.D_target}%</td>
+                    <td class="p-4 text-center font-mono text-slate-400">${row.count}</td>
+                    <td class="p-4 text-right font-mono font-bold text-amber-300">${Math.round(row.avg_k).toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
 
-                // 2. วาดกราฟ (เลือกเฉพาะ digits ที่มากที่สุด)
-                const maxDigit = Math.max(...data.map(d => d.digits));
-                const chartData = data.filter(d => d.digits === maxDigit).sort((a,b) => a.D_target - b.D_target);
-                
-                const labels = chartData.map(d => `D = ${d.D_target}%`);
-                const kValues = chartData.map(d => d.avg_k);
+        function updateDropdown(data) {
+            const select = document.getElementById('digitSelect');
+            const currentVal = select.value;
+            if (data.length === 0) { select.innerHTML = '<option value="">ไม่มีข้อมูล</option>'; return; }
+            const uniqueDigits = [...new Set(data.map(d => d.digits))].sort((a, b) => a - b);
+            select.innerHTML = uniqueDigits.map(d => `<option value="${d}">${d} หลัก</option>`).join('');
+            if (currentVal && uniqueDigits.includes(parseInt(currentVal))) { select.value = currentVal; }
+            else if (uniqueDigits.length > 0) { select.value = uniqueDigits[uniqueDigits.length - 1]; }
+            updateChart();
+        }
 
-                if (chartInstance) chartInstance.destroy();
-                
-                const ctx = document.getElementById('myChart').getContext('2d');
-                chartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: `ค่าเฉลี่ย k (เมื่อ p,q ขนาด ${maxDigit} หลัก)`,
-                            data: kValues,
-                            borderColor: '#38bdf8',
-                            backgroundColor: 'rgba(56, 189, 248, 0.2)',
-                            borderWidth: 3,
-                            tension: 0.4,
-                            fill: true,
-                            pointBackgroundColor: '#fff',
-                            pointBorderColor: '#38bdf8',
-                            pointRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { labels: { color: '#cbd5e1', font: { family: 'Prompt' } } },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return ' k ≈ ' + Math.round(context.parsed.y).toLocaleString() + ' รอบ';
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
-                            y: { 
-                                type: 'logarithmic', 
-                                ticks: { 
-                                    color: '#94a3b8',
-                                    callback: function(value) {
-                                        return value.toLocaleString(); // จัดรูปแบบตัวเลขให้อ่านง่าย
-                                    }
-                                }, 
-                                grid: { color: '#334155' } 
-                            }
-                        }
+        function updateChart() {
+            const selectedDigit = parseInt(document.getElementById('digitSelect').value);
+            if (!selectedDigit) return;
+            const chartData = allData.filter(d => d.digits === selectedDigit).sort((a, b) => a.D_target - b.D_target);
+            
+            if (chartInstance) chartInstance.destroy();
+            const ctx = document.getElementById('myChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.map(d => `D = ${d.D_target}%`),
+                    datasets: [{
+                        label: `ค่าเฉลี่ย k (ขนาด p,q = ${selectedDigit} หลัก)`,
+                        data: chartData.map(d => d.avg_k),
+                        borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                        borderWidth: 3, tension: 0.4, fill: true, pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#cbd5e1' } } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                        y: { type: 'logarithmic', ticks: { color: '#94a3b8', callback: v => v.toLocaleString() }, grid: { color: '#334155' } }
                     }
-                });
+                }
+            });
+        }
+
+        async function openRawModal() {
+            document.getElementById('rawModal').classList.remove('hidden');
+            document.getElementById('rawTableBody').innerHTML = '<tr><td colspan="6" class="text-center p-6 text-slate-400">กำลังโหลดข้อมูล...</td></tr>';
+            
+            try {
+                const res = await fetch('/api/raw_data');
+                allRawData = await res.json();
+                renderRawTable(allRawData);
             } catch (err) {
-                console.error("Error loading data:", err);
+                document.getElementById('rawTableBody').innerHTML = '<tr><td colspan="6" class="text-center p-6 text-red-400">โหลดข้อมูลไม่สำเร็จ</td></tr>';
             }
         }
 
+        function closeRawModal() {
+            document.getElementById('rawModal').classList.add('hidden');
+            document.getElementById('rawSearch').value = '';
+        }
+
+        function renderRawTable(data) {
+            const tbody = document.getElementById('rawTableBody');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center p-6 text-slate-400">ไม่มีข้อมูลในฐานข้อมูล</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.map(row => `
+                <tr class="hover:bg-slate-700/50 transition">
+                    <td class="p-3">${row.id}</td>
+                    <td class="p-3 text-cyan-300">${row.n}</td>
+                    <td class="p-3 text-amber-300">${row.e || '65537'}</td>
+                    <td class="p-3 text-green-400">${row.p}</td>
+                    <td class="p-3 text-green-400">${row.q}</td>
+                    <td class="p-3 text-right text-slate-300">${row.k.toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filterRawData() {
+            const query = document.getElementById('rawSearch').value.toLowerCase();
+            const filtered = allRawData.filter(row => 
+                row.n.includes(query) || row.p.includes(query) || row.q.includes(query)
+            );
+            renderRawTable(filtered);
+        }
+
         async function resetDB() {
-            if (!confirm('⚠️ ต้องการลบข้อมูลทั้งหมดใช่หรือไม่? (แนะนำให้ลบเพื่อเริ่มรัน Colab ใหม่ให้ข้อมูลเป๊ะๆ)')) return;
+            if (!confirm('⚠️ ต้องการลบข้อมูลทั้งหมดใช่หรือไม่?')) return;
             await fetch('/api/reset_db', { method: 'POST' });
             alert('ล้างข้อมูลสำเร็จ!');
             loadData();
         }
 
-        // โหลดข้อมูลครั้งแรก
         loadData();
     </script>
 </body>
