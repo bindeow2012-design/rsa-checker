@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSA Security Checker</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- เพิ่มไลบรารีสำหรับ Export PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
     <style>
@@ -26,50 +25,51 @@
         </div>
 
         <form id="checkForm" class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-semibold text-cyan-300 mb-2">ค่า n (Modulus)</label>
-                    <input type="text" id="n" required placeholder="เช่น 16867" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-100 focus:border-cyan-500 font-mono">
+                    <label class="block text-sm font-semibold text-cyan-300 mb-2">
+                        ค่า n (Modulus) <span class="text-red-400" title="จำเป็นต้องกรอก">*</span>
+                    </label>
+                    <input type="text" id="n" required placeholder="เช่น 16867" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 font-mono transition-colors">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-cyan-300 mb-2">ค่า e (Public Expo)</label>
-                    <input type="number" id="e" value="65537" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-100 focus:border-cyan-500 font-mono">
+                    <label class="block text-sm font-semibold text-cyan-300 mb-2 flex justify-between items-center">
+                        <span>ค่า e (Public Expo)</span>
+                        <span class="text-xs text-slate-500 font-normal">ไม่บังคับ</span>
+                    </label>
+                    <input type="number" id="e" placeholder="เว้นว่าง = 65537" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 font-mono transition-colors">
                 </div>
             </div>
             <div>
                 <label class="block text-sm font-semibold text-cyan-300 mb-2">ระยะห่าง p, q (D%)</label>
-                <input type="number" id="D" value="50" min="0" max="100" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-100 focus:border-cyan-500 font-mono">
+                <input type="number" id="D" value="50" min="0" max="100" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 font-mono transition-colors">
             </div>
-            <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold py-3 rounded-lg glow-btn">เริ่มการตรวจสอบ</button>
+            <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold py-3 rounded-lg glow-btn mt-2">เริ่มการตรวจสอบ</button>
         </form>
 
-        <!-- Result Box ที่สามารถ Export ได้ -->
         <div id="resultBox" class="hidden mt-6 bg-slate-800 p-6 rounded-xl border border-slate-600 relative">
             <div class="flex items-center gap-4 mb-4">
-                <div id="scoreCircle" class="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-slate-600">0</div>
+                <div id="scoreCircle" class="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-slate-600 flex-shrink-0">0</div>
                 <div>
                     <h3 id="resMsg" class="text-xl font-bold">-</h3>
                     <p id="resSub" class="text-sm text-slate-400">ผลการวิเคราะห์</p>
                 </div>
             </div>
             
-            <!-- Weak Key Alerts -->
             <div id="weakKeysBox" class="hidden mb-4 bg-red-900/30 border border-red-700 p-3 rounded-lg">
                 <p class="text-red-400 font-bold text-sm mb-1">⚠️ พบจุดอ่อน (Weak Keys):</p>
                 <ul id="weakKeysList" class="list-disc list-inside text-sm text-red-300 space-y-1"></ul>
             </div>
 
-            <!-- Explanations -->
             <div id="expList" class="space-y-2 text-sm text-slate-300 font-mono bg-slate-900/50 p-4 rounded-lg"></div>
             
-            <!-- ปุ่ม Export PDF (ลอยอยู่มุมขวาล่าง) -->
-            <button onclick="exportPDF()" class="mt-4 w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-lg flex justify-center items-center gap-2">
+            <button onclick="exportPDF()" class="mt-4 w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-lg flex justify-center items-center gap-2 transition-colors">
                 📄 ดาวน์โหลดรายงาน (PDF)
             </button>
         </div>
         
         <div class="mt-6 text-center">
-            <a href="/dashboard" class="text-sm text-cyan-400 hover:underline">ไปที่ Dashboard (กราฟและฐานข้อมูล)</a>
+            <a href="/dashboard" class="text-sm text-cyan-400 hover:text-cyan-300 hover:underline">ไปที่ Dashboard (กราฟและฐานข้อมูล)</a>
         </div>
     </div>
 
@@ -82,7 +82,7 @@
             btn.disabled = true; btn.innerText = 'กำลังคำนวณ...';
             
             const n = document.getElementById('n').value.trim();
-            const e_val = document.getElementById('e').value;
+            const e_val = document.getElementById('e').value || 65537;
             const D = document.getElementById('D').value;
             
             try {
@@ -96,7 +96,6 @@
                 
                 document.getElementById('resultBox').classList.remove('hidden');
                 
-                // ตั้งค่าสี
                 const colors = { 'danger': '#ef4444', 'warning': '#f97316', 'moderate': '#eab308', 'safe': '#22c55e', 'very_safe': '#10b981' };
                 const color = colors[data.status] || '#eab308';
                 
@@ -108,7 +107,6 @@
                 document.getElementById('resMsg').innerText = data.msg;
                 document.getElementById('resMsg').style.color = color;
                 
-                // แสดง Weak Keys (ถ้ามี)
                 const weakBox = document.getElementById('weakKeysBox');
                 const weakList = document.getElementById('weakKeysList');
                 if (data.weak_keys && data.weak_keys.length > 0) {
@@ -118,9 +116,8 @@
                     weakBox.classList.add('hidden');
                 }
                 
-                // แสดงคำอธิบาย
                 document.getElementById('expList').innerHTML = data.explanations.map(ex => 
-                    `<div class="flex gap-2"><span>${ex.icon}</span><span>${ex.text}</span></div>`
+                    `<div class="flex gap-2 items-start"><span>${ex.icon}</span><span>${ex.text}</span></div>`
                 ).join('');
                 
             } catch (err) {
@@ -130,13 +127,11 @@
             }
         });
 
-        // ฟังก์ชัน Export PDF
         function exportPDF() {
             if (!currentData) return;
             const element = document.getElementById('resultBox');
             const opt = {
-                margin: 10,
-                filename: `RSA_Report_${new Date().getTime()}.pdf`,
+                margin: 10, filename: `RSA_Report_${new Date().getTime()}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, backgroundColor: '#1e293b' },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
